@@ -1,0 +1,148 @@
+*confly.txt*       Three-pane Git conflict resolution for Neovim
+
+Author: Confly contributors
+License: MIT
+
+==============================================================================
+CONTENTS                                                   *confly* *confly.nvim*
+
+  1. Requirements ................................ |confly-requirements|
+  2. Workflow .................................... |confly-workflow|
+  3. Commands .................................... |confly-commands|
+  4. Mappings .................................... |confly-mappings|
+  5. Configuration ............................... |confly-configuration|
+  6. Git semantics and scope ..................... |confly-git|
+
+==============================================================================
+1. REQUIREMENTS                                            *confly-requirements*
+
+Neovim 0.10.4+, Git on PATH, and at least 90 terminal columns for the editor.
+No mandatory Lua dependencies.
+
+Install the checkout using lazy.nvim's `dir` option, or copy it into:
+  stdpath('data')/site/pack/plugins/start/confly
+
+Optional configuration: >
+  require("confly").setup({})
+<
+Run :checkhealth confly to verify dependencies.
+
+==============================================================================
+2. WORKFLOW                                                    *confly-workflow*
+
+Start a merge, rebase or cherry-pick using Git or lazygit. Run :Confly from the
+repository. Select a file with j/k and press Enter.
+
+The editor has three panes:
+
+  LEFT                  RESULT                 RIGHT
+  current / ours        editable working file   incoming / theirs
+  Git stage 2                                  Git stage 3
+
+In a source pane, j/k navigates conflict regions. Press c to accept that side,
+d to use the opposite side, or b to include both (left first). The middle pane
+keeps ordinary Neovim editing. Remove a conflict's markers and use <leader>cc
+to confirm a manually edited result.
+
+:ConflyResolve saves and stages only the current path, then returns to the file
+picker. A green check appears after Git confirms no unmerged entries remain.
+
+For whole-file resolution, use l/r in the picker. This accepts and stages the
+entire left/right version, including changes outside conflict regions.
+
+Return to Git or lazygit to review staged changes and continue the operation.
+Confly does not commit or run merge/rebase --continue.
+
+==============================================================================
+3. COMMANDS                                                    *confly-commands*
+
+:Confly                                                              *:Confly*
+    Open the conflicted-file picker. Locate the repository from the current
+    buffer, falling back to Neovim's working directory.
+
+:ConflyFiles                                                    *:ConflyFiles*
+    Return to and refresh the file picker.
+
+:ConflyResolve                                                *:ConflyResolve*
+    Validate all decisions, write the result and stage this path only.
+
+:ConflyClose                                                    *:ConflyClose*
+    Close the Confly interface. Unsaved result buffers remain available.
+
+==============================================================================
+4. MAPPINGS                                                    *confly-mappings*
+
+File picker:
+  j / k                Next / previous file
+  Enter                Open three-pane editor
+  l / r                Accept and stage whole left / right version
+  R                    Refresh
+  q                    Close
+
+Source panes:
+  j / k                Next / previous conflict (wraps; includes resolved ones)
+  c                    Accept focused side
+  d                    Accept opposite side
+  b                    Include both sides, left then right
+  u                    Undo latest result edit/decision
+
+All merge panes:
+  ]x / [x              Next / previous conflict
+  Ctrl+1/2/3           Focus left / result / right (terminal-dependent)
+  <leader>c1/c2/c3     Reliable fallback pane-focus keys
+  <leader>cu           Undo latest result edit/decision
+  <leader>cf           File picker
+  <leader>cs           Save and stage
+
+Result pane:
+  <leader>cc           Confirm manually edited conflict
+
+Ctrl+number may require an extended keyboard protocol in your terminal. The
+fallback bindings work without it. All mappings are buffer-local.
+
+==============================================================================
+5. CONFIGURATION                                          *confly-configuration*
+>
+  require("confly").setup({
+    icons = true,
+    ctrl_numbers = true,
+    keys = {
+      j = "j", k = "k", open = "<CR>", left = "l", right = "r",
+      refresh = "R", close = "q", accept = "c", discard = "d", both = "b",
+      source_undo = "u", undo = "<leader>cu", confirm = "<leader>cc",
+      next = "]x", prev = "[x", files = "<leader>cf", resolve = "<leader>cs",
+      pane1 = "<leader>c1", pane2 = "<leader>c2", pane3 = "<leader>c3",
+    },
+  })
+<
+Set a key to false to disable it. icons=false uses [ok]/[!] status labels.
+
+Highlight groups (override with nvim_set_hl):
+  ConflyTitle        ConflyMuted       ConflyConflict    ConflyActive
+  ConflyResolved     ConflyPending     ConflyLeft        ConflyRight
+
+==============================================================================
+6. GIT SEMANTICS AND SCOPE                                          *confly-git*
+
+For ordinary merges, left is current and right is incoming. For rebases, left
+is the rebased-onto version and right is the replayed commit. Pane headers show
+operation-aware labels and available branch/commit information.
+
+Text merge/add-add/modify-delete conflicts are supported. Binary conflicts use
+whole-file selection. Accepting a missing stage deletes and stages the path.
+Symlinks, submodules and differing executable modes need Git's own tools.
+Renames are shown as per-path conflicts, without a rename-pairing UI.
+The text UI targets UTF-8; binary/UTF-16 files use whole-file selection.
+
+Existing modified buffers are reused by the editor. Whole-file replacement
+rejects unsaved buffers. Changed index entries or worktree contents require a
+refresh before accepting a stale version.
+
+Leaving the merge editor preserves the result buffer but resets per-region
+decision history. If a reopened unmerged file has no markers, confirm its
+complete result with <leader>cc.
+
+Resolved entries remain visible during the current session. One Confly session
+is active per Neovim instance.
+
+vim:tw=78:ts=8:ft=help:norl:
