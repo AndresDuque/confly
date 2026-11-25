@@ -16,6 +16,7 @@ local defaults = {
     source_undo = "u", undo = "<leader>cu", confirm = "<leader>cc",
     next = "]x", prev = "[x", files = "<leader>cf", resolve = "<leader>cs",
     pane1 = "<leader>c1", pane2 = "<leader>c2", pane3 = "<leader>c3",
+    help = "?",
   },
 }
 local config = vim.deepcopy(defaults)
@@ -122,7 +123,6 @@ local function render()
     vim.wo[merge.wins[2]].winbar = "%#ConflyTitle# 2  Result · "
       .. ui.display_path(merge.entry.path):gsub("%%", "%%%%")
       .. "  %=" .. remaining .. " unresolved "
-    vim.wo[merge.wins[2]].statusline = " ConflyResolve: save + stage %=%l:%c "
   end
 end
 
