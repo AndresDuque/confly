@@ -44,6 +44,9 @@ d to use the opposite side, or b to include both (left first). The middle pane
 keeps ordinary Neovim editing. Remove a conflict's markers and use <leader>cc
 to confirm a manually edited result.
 
+Status-line hints show resolution keys. Press ? in any merge pane to see the
+full key guide with configured mappings. Use j/k to scroll and q or Esc to close.
+
 :ConflyResolve saves and stages only the current path, then returns to the file
 picker. A green check appears after Git confirms no unmerged entries remain.
 
@@ -87,6 +90,7 @@ Source panes:
   u                    Undo latest result edit/decision
 
 All merge panes:
+  ?                    Show merge key guide (q / Esc to close)
   ]x / [x              Next / previous conflict
   Ctrl+1/2/3           Focus left / result / right (terminal-dependent)
   <leader>c1/c2/c3     Reliable fallback pane-focus keys
@@ -112,6 +116,7 @@ fallback bindings work without it. All mappings are buffer-local.
       source_undo = "u", undo = "<leader>cu", confirm = "<leader>cc",
       next = "]x", prev = "[x", files = "<leader>cf", resolve = "<leader>cs",
       pane1 = "<leader>c1", pane2 = "<leader>c2", pane3 = "<leader>c3",
+      help = "?",
     },
   })
 <

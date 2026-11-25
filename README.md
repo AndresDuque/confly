@@ -26,6 +26,9 @@ The current version is on the left, your editable result is in the middle, and
 the incoming version is on the right. Only conflict regions receive Confly's
 background highlights.
 
+Status-line hints show the resolution keys. Press `?` in any merge pane for
+the full key guide, including your configured mappings; close it with `q` or `Esc`.
+
 ![Confly three-pane merge editor with two highlighted conflicts](docs/screenshots/three-pane.png)
 
 ### Build the result
@@ -176,6 +179,7 @@ All plugin mappings are buffer-local and configurable.
 | Left/right panes | `b` | Include both sides, left then right |
 | Left/right panes | `u` | Undo the latest result edit/decision |
 | Any merge pane | `]x` / `[x` | Next / previous conflict |
+| Any merge pane | `?` | Show merge key guide (`q` / `Esc` to close) |
 | Any merge pane | `Ctrl+1` / `Ctrl+2` / `Ctrl+3` | Focus left / result / right |
 | Any merge pane | `<leader>c1` / `<leader>c2` / `<leader>c3` | Fallback pane focus |
 | Any merge pane | `<leader>cu` | Undo the latest result edit/decision |
@@ -219,6 +223,7 @@ require("confly").setup({
     pane1 = "<leader>c1",
     pane2 = "<leader>c2",
     pane3 = "<leader>c3",
+    help = "?",
   },
 })
 ```

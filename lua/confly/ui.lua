@@ -131,6 +131,81 @@ function M.files(session, callbacks, config)
   end
 end
 
+local function merge_help(config)
+  local lines = { "  CONFLY / MERGE KEYS", "", "  Left/right panes (active conflict)" }
+  local function hint(key, description)
+    local value = config.keys[key]
+    lines[#lines + 1] = "  " .. (value and value ~= "" and value or "(disabled)") .. "  " .. description
+  end
+  hint("accept", "Accept the focused side")
+  hint("discard", "Accept the opposite side")
+  hint("both", "Include both sides, left then right")
+  hint("source_undo", "Undo the latest result edit/decision")
+  hint("j", "Next conflict")
+  hint("k", "Previous conflict")
+  vim.list_extend(lines, { "", "  Middle/result pane", "  Edit normally and remove conflict markers, then:" })
+  hint("confirm", "Confirm the manually edited conflict")
+  vim.list_extend(lines, { "", "  Any merge pane" })
+  hint("next", "Next conflict")
+  hint("prev", "Previous conflict")
+  hint("pane1", "Focus left pane")
+  hint("pane2", "Focus result pane")
+  hint("pane3", "Focus right pane")
+  if config.ctrl_numbers then
+    lines[#lines + 1] = "  Ctrl+1/2/3  Focus panes (terminal-dependent)"
+  end
+  hint("undo", "Undo the latest result edit/decision")
+  hint("files", "Return to the file picker")
+  hint("resolve", "Save and stage after resolving all conflicts")
+  vim.list_extend(lines, {
+    "  :ConflyResolve  Save and stage, then return to the file picker",
+    "",
+    "  Whole-file acceptance is available in the file picker.",
+    "  j/k scroll help    q / Esc close",
+  })
+  local width = math.min(76, vim.o.columns - 4)
+  local height = math.min(#lines, vim.o.lines - 4)
+  local buf = M.scratch("help", lines)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor", style = "minimal", border = "rounded",
+    width = width, height = height,
+    row = math.floor((vim.o.lines - height) / 2) - 1,
+    col = math.floor((vim.o.columns - width) / 2),
+    title = " Confly help · q / Esc close ", title_pos = "center",
+  })
+  vim.wo[win].wrap = true
+  local function close()
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+  end
+  M.map(buf, "q", close, "close help")
+  M.map(buf, "<Esc>", close, "close help")
+  vim.api.nvim_create_autocmd("BufLeave", { buffer = buf, once = true, callback = close })
+end
+
+local function merge_statusline(config, result)
+  local hints = {}
+  local function hint(key, label)
+    local value = config.keys[key]
+    if value and value ~= "" then
+      hints[#hints + 1] = value .. " " .. label
+    end
+  end
+  hint("help", "help")
+  if result then
+    hint("resolve", "save+stage")
+    if not config.keys.resolve or config.keys.resolve == "" then
+      hints[#hints + 1] = ":ConflyResolve save+stage"
+    end
+  else
+    hint("accept", "accept")
+    hint("discard", "opposite")
+    hint("both", "both")
+  end
+  return " " .. table.concat(hints, "  "):gsub("%%", "%%%%") .. " %<%=%l:%c "
+end
+
 function M.merge(session, merge, callbacks, config)
   local left_win = M.one_window(session)
   local left = M.scratch("left", merge.left)
@@ -151,6 +226,8 @@ function M.merge(session, merge, callbacks, config)
   M.window(right_win, "3  " .. session.context.right, "ConflyRight")
   vim.cmd("wincmd =")
   for index, buf in ipairs(merge.bufs) do
+    vim.wo[merge.wins[index]].statusline = merge_statusline(config, index == 2)
+    M.map(buf, config.keys.help, function() merge_help(config) end, "merge help")
     for target = 1, 3 do
       local focus = function()
         if vim.api.nvim_win_is_valid(merge.wins[target]) then
